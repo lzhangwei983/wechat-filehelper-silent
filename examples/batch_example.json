@@ -1,0 +1,21 @@
+[
+  {
+    "type": "text",
+    "content": "🚀 【任务交付通知】自动化报告与配套资产已生成完毕："
+  },
+  {
+    "type": "file",
+    "path": "D:\\path\\to\\report.pdf"
+  },
+  {
+    "type": "files",
+    "paths": [
+      "D:\\path\\to\\chart1.png",
+      "D:\\path\\to\\chart2.png"
+    ]
+  },
+  {
+    "type": "text",
+    "content": "✨ 全流程执行完毕，请在手机微信中查收。"
+  }
+]
