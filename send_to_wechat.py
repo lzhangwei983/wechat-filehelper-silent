@@ -6,7 +6,6 @@ WeChat File Transfer Assistant Delivery Tool (WeChat FileHelper CLI)
 - Uses layered window Alpha=0 transparency to prevent screen flickering/disruption.
 - Supports clipboard retry & Direct Typing fallback for rock-solid reliability.
 - Preserves exact sending order and restores user foreground focus upon completion.
-- Native adaptation for WeChat 4.x (Qt / mmui) via keyboard-driven zero-click search navigation.
 """
 
 import os
@@ -19,6 +18,24 @@ import argparse
 from pathlib import Path
 import win32clipboard
 import win32con
+import win32gui
+
+_helper_hwnd = None
+
+def _get_clipboard_hwnd():
+    global _helper_hwnd
+    if _helper_hwnd and win32gui.IsWindow(_helper_hwnd):
+        return _helper_hwnd
+    wc = win32gui.WNDCLASS()
+    wc.lpfnWndProc = lambda hwnd, msg, wparam, lparam: 0
+    wc.lpszClassName = "WeChatClipHelperWnd"
+    wc.hInstance = win32gui.GetModuleHandle(None)
+    try:
+        win32gui.RegisterClass(wc)
+    except Exception:
+        pass
+    _helper_hwnd = win32gui.CreateWindow("WeChatClipHelperWnd", "ClipHelper", 0, 0, 0, 0, 0, 0, 0, wc.hInstance, None)
+    return _helper_hwnd
 
 class DROPFILES(ctypes.Structure):
     _fields_ = [
@@ -42,9 +59,10 @@ def set_clipboard_files(file_paths, retries=15):
     blob = bytes(dropfiles) + data_bytes
     
     last_err = None
+    hwnd = _get_clipboard_hwnd()
     for attempt in range(retries):
         try:
-            win32clipboard.OpenClipboard()
+            win32clipboard.OpenClipboard(hwnd)
             try:
                 win32clipboard.EmptyClipboard()
                 win32clipboard.SetClipboardData(win32con.CF_HDROP, blob)
@@ -59,9 +77,10 @@ def set_clipboard_files(file_paths, retries=15):
 def set_clipboard_text(text, retries=15):
     """Sets CF_UNICODETEXT clipboard format with retry."""
     last_err = None
+    hwnd = _get_clipboard_hwnd()
     for attempt in range(retries):
         try:
-            win32clipboard.OpenClipboard()
+            win32clipboard.OpenClipboard(hwnd)
             try:
                 win32clipboard.EmptyClipboard()
                 win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
